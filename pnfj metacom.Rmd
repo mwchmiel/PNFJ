@@ -1,0 +1,726 @@
+---
+title: "Fray Jorge Bryophyte Metacommunities"
+author: "Matthew Chmielewski"
+date: "February 16, 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+load packages
+```{r}
+library("tidyverse", "metacom", "ggrepel", "stringr")
+
+```
+
+load data
+```{r}
+pnfj<-read.csv(file = "group_meansfinal.csv", row.names = 1 )
+head(pnfj)
+length(subset(pnfj$site, pnfj$patch == "A"))
+
+```
+
+plot abundance of species by site
+```{r}
+plot(A~site, data= pnfj)
+plot(B~site, data= pnfj)
+plot(C~site, data= pnfj)
+plot(D~site, data= pnfj)
+plot(E~site, data= pnfj)
+plot(F~site, data= pnfj)
+plot(G~site, data= pnfj)
+plot(H~site, data= pnfj)
+plot(I~site, data= pnfj)
+plot(J~site, data= pnfj)
+plot(K~site, data= pnfj)
+plot(L~site, data= pnfj)
+plot(M~site, data= pnfj)
+plot(N~site, data= pnfj)
+plot(P~site, data= pnfj)
+
+```
+
+
+alter abundance to binary data
+```{r}
+binarypnfj<-!is.na(pnfj)
+binarypnfj2<-binarypnfj*1
+binarydf<-as.data.frame(binarypnfj2)
+binarydf$site<-pnfj$site
+binarydf$patch<-pnfj$patch
+binarydf$height<-pnfj$height
+head(binarydf)
+```
+
+split data into subsets of interest
+```{r}
+binaryhigh<-subset(binarydf, binarydf$height == "H")
+binarylow<-subset(binarydf, binarydf$height == "L")
+binaryA<-subset(binarydf, binarydf$patch == "A")
+binaryB<-subset(binarydf, binarydf$patch == "B")
+binaryC<-subset(binarydf, binarydf$patch == "C")
+binaryD<-subset(binarydf, binarydf$patch == "D")
+binaryE<-subset(binarydf, binarydf$patch == "E")
+binaryF<-subset(binarydf, binarydf$patch == "F")
+binaryG<-subset(binarydf, binarydf$patch == "G")
+binaryH<-subset(binarydf, binarydf$patch == "H")
+binaryI<-subset(binarydf, binarydf$patch == "I")
+binaryJ<-subset(binarydf, binarydf$patch == "J")
+binaryK<-subset(binarydf, binarydf$patch == "K")
+binaryL<-subset(binarydf, binarydf$patch == "L")
+binaryM<-subset(binarydf, binarydf$patch == "M")
+binaryN<-subset(binarydf, binarydf$patch == "N")
+binaryO<-subset(binarydf, binarydf$patch == "O")
+binaryP<-subset(binarydf, binarydf$patch == "P")	
+binaryQ<-subset(binarydf, binarydf$patch == "Q")
+binaryR<-subset(binarydf, binarydf$patch == "R")
+binaryS<-subset(binarydf, binarydf$patch == "S")
+binaryT<-subset(binarydf, binarydf$patch == "T")
+
+```
+
+Listing columns that are missing values for metacom analysis
+```{r}
+subsetnames<- c("high", "low", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T")
+
+
+binarylist<-list(binaryhigh[,c(-1,-17,-18)], binarylow[,c(-1,-17,-18)], binaryA[,c(-1,-17,-18)], binaryB[,c(-1,-17,-18)], binaryC[,c(-1,-17,-18)], binaryD[,c(-1,-17,-18)], binaryE[,c(-1,-17,-18)], binaryF[,c(-1,-17,-18)], binaryG[,c(-1,-17,-18)], binaryH[,c(-1,-17,-18)], binaryI[,c(-1,-17,-18)], binaryJ[,c(-1,-17,-18)], binaryK[,c(-1,-17,-18)], binaryL[,c(-1,-17,-18)], binaryM[,c(-1,-17,-18)], binaryN[,c(-1,-17,-18)], binaryO[,c(-1,-17,-18)], binaryP[,c(-1,-17,-18)], binaryQ[,c(-1,-17,-18)], binaryR[,c(-1,-17,-18)], binaryS[,c(-1,-17,-18)], binaryT[,c(-1,-17,-18)])
+
+dropvalues<-lapply(binarylist, colSums)
+names(dropvalues) <- subsetnames
+dropvalues
+```
+
+determine metacommunity structure: must remove any species with zero observations for each subset of interest
+```{r}
+
+testlist<-list(binaryhigh[,c(-1,-16,-17,-18)], binarylow[,c(-1,-17,-18)])
+
+newlist<-list(binaryhigh[,c(-1,-16:-18)], binarylow[,c(-1, -17, -18)], binaryA[,c(-1,-13:-18)], binaryB[,c(-1,-12:-18)], binaryC[,c(-1, -3, -13:-18)], binaryD[,c(-1, -9, -13:-18)], binaryE[,c(-1:-3, -6, -9, -13, -16:-18)], binaryF[,c(-1:-4, -6, -8, -9, -12, -14:-18)], binaryG[,c(-1, -3, -6, -8, -9, -13,-15:-18)], binaryH[,c(-1:-3, -6, -16:-18)], binaryI[,c(-1, -3, -6, -8, -9, -12, -16:-18)], binaryJ[,c(-1,-6, -8, -9, -11, -16:-18)], binaryK[,c(-1, -6, -8, -9, -12, -13, -16:-18)], binaryL[,c(-1,-4, -6, -8, -9, -13, -16:-18)], binaryM[,c(-1, -3, -6, -8, -9, -13, -16:-18)], binaryN[,c(-1:-4, -6, -8, -9, -12:-18)], binaryO[,c(-1, -6, -8, -9, -13, -14, -16:-18)], binaryP[,c(-1, -6, -8, -9, -17,-18)], binaryQ[,c(-1, -3, -4, -6, -8, -9, -14, -16:-18)], binaryR[,c(-1, -3, -6, -8, -9, -13, -16:-18)], binaryS[,c(-1, -3, -4, -6, -8, -9, -16:-18)], binaryT[,c(-1, -3, -6, -9, -11, -16:-18)])
+
+wholepark<-metacom::Metacommunity(binarydf[, c(-1, -17, -18)])
+binarydf
+bryo_metacommunities<-lapply(newlist, metacom::Metacommunity)
+names(bryo_metacommunities) <- subsetnames
+# can now call individual outputs as well as output features in the below object
+bryo_metacommunities
+
+
+test1<-metacom::Metacommunity(binarylow[, c(-1, -17, -18)], method = "swap")
+test2<-metacom::Metacommunity(binarylow[, c(-1, -17, -18)])
+
+saveRDS(bryo_metacommunities, "bryometa")
+
+#visualize all ordinated matrices below
+
+#whole park
+metacom::Imagine(binarydf[, c(-1, -17, -18)], col = c(0, 1), order = FALSE, scores = 1, fill = TRUE,
+  xlab = "Species", ylab = "Site", yline = 2, xline = 2,
+  sitenames = rownames(binarydf[, c(-1, -17, -18)]), speciesnames = colnames(binarydf[, c(-1, -17, -18)]),
+  binary = TRUE)
+
+#subsets
+lapply(newlist, metacom::Imagine, col = c(0, 1), order = TRUE, scores = 1, fill = TRUE,
+  xlab = "Species", ylab = "Site", yline = 2, xline = 2,binary = TRUE)
+
+#plot them
+pdf("plots/ordinatedmatrixes.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(metacom::Imagine(binarydf[, c(-1, -17, -18)], col = c(0, 1), order = FALSE, scores = 1, fill = TRUE,
+  xlab = "Species", ylab = "Site", yline = 2, xline = 2,
+  sitenames = "", speciesnames = colnames(binarydf[, c(-1, -17, -18)]),
+  binary = TRUE))
+plot(lapply(newlist, metacom::Imagine, col = c(0, 1), order = TRUE, scores = 1, fill = TRUE,
+  xlab = "Species", ylab = "Site", sitenames = "", yline = 2, xline = 2,binary = TRUE))
+dev.off()
+
+metacom::Imagine(binarydf[, c(-1, -17, -18)], col = c(0, 1), order = FALSE, scores = 1, fill = TRUE,
+  xlab = "Species", ylab = "Site", yline = 2, xline = 2,
+  sitenames = rownames(binarydf[, c(-1, -17, -18)]), speciesnames = colnames(binarydf[, c(-1, -17, -18)]),
+  binary = TRUE)
+
+
+metacom::Imagine(binaryhigh[,c(-1, -16, -17,-18)], col = c(0, 1), order = FALSE, scores = 1, fill = TRUE,
+  xlab = "Species", ylab = "Site", yline = 2, xline = 2,
+  sitenames = rownames(binaryhigh[,c(-1, -16, -17,-18)]), speciesnames = colnames(binaryhigh[,c(-1, -16, -17,-18)]),
+  binary = TRUE)
+
+metacom::Imagine(binarypnfj2[,c(-1,-17,-18)], col = c(0, 1), order = TRUE, scores = 1, fill = TRUE,
+  xlab = "Species", ylab = "Site", yline = 2, xline = 2,
+  sitenames = rownames(binarypnfj2[,c(-1,-17,-18)]), speciesnames = colnames(binarypnfj2[,c(-1,-17,-18)]),
+  binary = TRUE)
+
+metacom::Imagine(binaryA[,c(-1,-13,-14,-15,-16,-17,-18)], col = c(0, 1), order = TRUE, scores = 1, fill = TRUE,
+  xlab = "Species", ylab = "Site", yline = 2, xline = 2,
+  sitenames = rownames(binaryA[,c(-1,-13,-14,-15,-16,-17,-18)]), speciesnames = colnames(binaryA[,c(-1,-13,-14,-15,-16,-17,-18)]),
+  binary = TRUE)
+
+plot(metacom::Imagine(binaryB[,c(-1,-17,-18)], col = c(0, 1), order = TRUE, scores = 1, fill = TRUE,
+  xlab = "Species", ylab = "Site", yline = "2", xline = 2,
+  sitenames = "", speciesnames = colnames(binaryB[,c(-1,-17,-18)]),
+  binary = TRUE))
+
+
+```
+
+Diversity Indices
+```{r}
+library(vegan)
+
+pnfjdiverse<-pnfj
+pnfjdiverse[is.na(pnfj)]<-0
+pnfjdiverse$shannon<-diversity(pnfjdiverse[,c(-1,-17,-18)], index= "shannon")
+pnfjdiverse$invsimpson<-diversity(pnfjdiverse[,c(-1,-17,-18, -19)], index= "invsimpson")
+pnfjdiverse$simpson<-diversity(pnfjdiverse[,c(-1,-17,-18, -19, -20)], index= "simpson")
+
+pnfjdiverse$tree<-str_extract(pnfjdiverse$site, "[A-Z][:digit:]")
+
+head(pnfjdiverse)
+
+
+```
+
+
+load libraries, load data, and project to usable lat/lon
+```{r}
+library(ggplot2);library(viridis);library(maps);library(mapdata);library(raster);library(proj4); library(ggmap)
+
+mapdata<-read.csv("PNFJ species and coordinates.csv")
+mapdata2<-mapdata[,-8:-10]
+head(mapdata2)
+
+mapdata3<-subset(mapdata2, Lat == "" )
+length(mapdata2$Lat)
+length(mapdata3$Lat)
+
+proj4string <- "+proj=utm +zone=19J +south +ellps=WGS84 +datum=WGS84 +units=m +no_defs "
+
+# Source data
+xy <- data.frame(mapdata[,2:3])
+
+# Transformed data
+pj <- project(xy, proj4string, inverse=TRUE)
+latlon <- data.frame(lat=pj$y, lon=pj$x)
+head(latlon)
+
+newdata<-latlon
+newdata$site<-mapdata$Site
+head(newdata)
+```
+
+Create patch-level metacom pattern dataset with patch-center lat/lon points
+```{r}
+library(stringr); library(plyr)
+newdata$patch<-str_extract(newdata$site, "[aA-zZ]+")
+
+patchcenter<-ddply(newdata, "patch", summarise,
+                   lat = mean(lat),
+                   lon   = mean(lon))
+patchcenter$pattern<-c("Gleasonian", 
+                       "Quasi-Clementsian", 
+                       "Gleasonian", 
+                       "Gleasonian", 
+                       "Clementsian", 
+                       "Quasi -Random species loss", 
+                       "Gleasonian", 
+                       "Quasi-Clementsian", 
+                       "Quasi -Clumped species loss", 
+                       "Quasi-Clementsian", 
+                       "Clementsian", 
+                       "Random species loss", 
+                       "Gleasonian", 
+                       "Quasi-Clementsian", 
+                       "Quasi -Clumped species loss", 
+                       "Clementsian", 
+                       "Gleasonian", 
+                       "Quasi -Clumped species loss", 
+                       "Quasi-Clementsian", 
+                       "Quasi-Clementsian")
+patchcenter
+
+```
+
+Add aspect, dbh, canopy cover
+```{r}
+pnfjenviro<-pnfjdiverse
+pnfjenviro$aspect[pnfjenviro$patch == "A"]<-240
+pnfjenviro$aspect[pnfjenviro$patch == "B"]<-233
+pnfjenviro$aspect[pnfjenviro$patch == "C"]<-178
+pnfjenviro$aspect[pnfjenviro$patch == "D"]<-253
+pnfjenviro$aspect[pnfjenviro$patch == "E"]<-104
+pnfjenviro$aspect[pnfjenviro$patch == "F"]<-251
+pnfjenviro$aspect[pnfjenviro$patch == "G"]<-277
+pnfjenviro$aspect[pnfjenviro$patch == "H"]<-279
+pnfjenviro$aspect[pnfjenviro$patch == "I"]<-220
+pnfjenviro$aspect[pnfjenviro$patch == "J"]<-274
+pnfjenviro$aspect[pnfjenviro$patch == "K"]<-254
+pnfjenviro$aspect[pnfjenviro$patch == "L"]<-253
+pnfjenviro$aspect[pnfjenviro$patch == "M"]<-188
+pnfjenviro$aspect[pnfjenviro$patch == "N"]<-200
+pnfjenviro$aspect[pnfjenviro$patch == "O"]<-212
+pnfjenviro$aspect[pnfjenviro$patch == "P"]<-188
+pnfjenviro$aspect[pnfjenviro$patch == "Q"]<-184
+pnfjenviro$aspect[pnfjenviro$patch == "R"]<-252
+pnfjenviro$aspect[pnfjenviro$patch == "S"]<-218
+pnfjenviro$aspect[pnfjenviro$patch == "T"]<-253
+pnfjenviro$aspect
+
+head(pnfjenviro)
+envirodata<-read.csv("group_meansfinalwenviro.csv", row.names= 1,sep =",")
+envirodata
+envirodata2<-envirodata[,c(1,19, 21)]
+head(envirodata2)
+
+envirofinal<-full_join(envirodata2,pnfjenviro, by = "site")
+envirofinal$tree<-pnfjdiverse$tree
+head(envirofinal)
+
+covermod<-aov(lm(cover~aspect+patch+dbh, data=envirofinal))
+anova(covermod)
+coverpatchmod<-aov(lm(cover~patch, data =envirofinal))
+TukeyHSD(coverpatchmod)
+
+coverdbhmod<-lm(cover~dbh, data=envirofinal)
+summary(coverdbhmod)
+
+summary(covermod)
+
+anova(aov(dbh~patch, data =envirofinal))
+anova(aov(cover~patch, data =envirofinal))
+
+
+patterndata<-full_join(envirofinal, patchcenter[c(1,4)], by = "patch")
+indlatlon<-newdata
+names(indlatlon)[3]<-"tree"
+head(indlatlon)
+indlatlon[,-4]
+
+patterndata<-full_join(patterndata, indlatlon[,-4], by ="tree")
+patterndata<-subset(patterndata, site != "NA")
+
+summary(lm(dbh~patch, data =envirofinal))
+
+#############this has all the data together
+head(patterndata)
+```
+
+Stats and Data Plots
+```{r}
+
+############metacomm structure and variables######################
+dbhstructurebox<-ggplot(data=patterndata, aes(pattern, dbh)) +
+  geom_boxplot(outlier.shape = NA, fill = "lightblue")+
+  geom_jitter(height = 0, width = .3)+
+  theme_bw()+
+  theme(#axis.title.x = element_blank(),
+    #axis.title.y = element_blank(),
+    axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+    panel.grid.minor.x=element_blank(),
+    panel.grid.major.x=element_blank(),
+    panel.grid.minor.y=element_blank(),
+    panel.grid.major.y=element_blank())+
+  xlab("")+
+  ylab("DBH")
+
+dbhstructurebox
+
+pdf("plots/dbhstructure.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(dbhstructurebox)
+dev.off()
+
+
+dbhbypatternmod<-aov(dbh~pattern, data = patterndata)
+anova(dbhbypatternmod)
+TukeyHSD(dbhbypatternmod)
+#quasi-random species loss sig diff from gleasonian p = 0.02
+
+coverstructurebox<-ggplot(data=patterndata, aes(pattern, cover)) +
+  geom_boxplot(outlier.shape = NA, fill = "lightblue")+
+  geom_jitter(height = 0, width = .3)+
+  theme_bw()+
+  theme(#axis.title.x = element_blank(),
+    #axis.title.y = element_blank(),
+    axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+    panel.grid.minor.x=element_blank(),
+    panel.grid.major.x=element_blank(),
+    panel.grid.minor.y=element_blank(),
+    panel.grid.major.y=element_blank())+
+  xlab("")+
+  ylab("Cover")
+
+coverstructurebox
+
+pdf("plots/coverstructure.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(coverstructurebox)
+dev.off()
+
+coverbypatternmod<-aov(cover~pattern, data = patterndata)
+anova(coverbypatternmod)
+TukeyHSD(coverbypatternmod)
+#quasi-random loss x clementsian p = 0.001, quasi -clumped loss x gleasonian p = 0.03, quasi-random x gleasonian p <0.001,
+#quasi random loss x quasi clementsian p = 0.003
+
+latstructurebox<-ggplot(data=patterndata, aes(pattern, lat)) +
+  geom_boxplot(outlier.shape = NA, fill = "lightblue")+
+  geom_jitter(height = 0, width = .3)+
+  theme_bw()+
+  theme(#axis.title.x = element_blank(),
+    #axis.title.y = element_blank(),
+    axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+    panel.grid.minor.x=element_blank(),
+    panel.grid.major.x=element_blank(),
+    panel.grid.minor.y=element_blank(),
+    panel.grid.major.y=element_blank())+
+  xlab("")+
+  ylab("Latitude")
+
+latstructurebox
+
+pdf("plots/latstructure.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(latstructurebox)
+dev.off()
+
+latbypatternmod<-aov(lat~pattern, data = patterndata)
+anova(latbypatternmod)
+TukeyHSD(latbypatternmod)
+#quasi clumped loss x gleasonian p <0.001, quasi clumped lossx quasi clementsian p = 0.03, quasi random loss x quasi clumped loss p = 0.01
+
+
+lonstructurebox<-ggplot(data=patterndata, aes(pattern, lon)) +
+  geom_boxplot(outlier.shape = NA, fill = "lightblue")+
+  geom_jitter(height = 0, width = .3)+
+  theme_bw()+
+  theme(#axis.title.x = element_blank(),
+    #axis.title.y = element_blank(),
+    axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+    panel.grid.minor.x=element_blank(),
+    panel.grid.major.x=element_blank(),
+    panel.grid.minor.y=element_blank(),
+    panel.grid.major.y=element_blank())+
+  xlab("")+
+  ylab("Longitude")
+
+lonstructurebox
+
+pdf("plots/lonstructure.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(lonstructurebox)
+dev.off()
+
+lonbypatternmod<-aov(pattern~lon, data = patterndata)
+anova(lonbypatternmod)
+TukeyHSD(lonbypatternmod)
+
+
+##################################diversity##################################
+shannonpatchbox<-ggplot(data=patterndata, aes(patch, shannon)) +
+  geom_boxplot(outlier.shape = NA, fill = "lightblue")+
+  geom_jitter(height = 0, width = .3)+
+  theme_bw()+
+  theme(#axis.title.x = element_blank(),
+    #axis.title.y = element_blank(),
+    axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+    panel.grid.minor.x=element_blank(),
+    panel.grid.major.x=element_blank(),
+    panel.grid.minor.y=element_blank(),
+    panel.grid.major.y=element_blank())+
+  xlab("")+
+  ylab("Shannon Diversity")
+
+shannonpatchbox
+
+pdf("plots/shannonpatch.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(shannonpatchbox)
+dev.off()
+
+shannonbypatchmod<-aov(shannon~patch, data = patterndata)
+anova(shannonbypatchmod) #p = 0.037
+TukeyHSD(shannonbypatchmod)
+#R-N p = 0.05, R-K p = 0.05
+
+
+
+shannonstructurebox<-ggplot(data=patterndata, aes(pattern, shannon)) +
+  geom_boxplot(outlier.shape = NA, fill = "lightblue")+
+  geom_jitter(height = 0, width = .3)+
+  theme_bw()+
+  theme(#axis.title.x = element_blank(),
+    #axis.title.y = element_blank(),
+    axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+    panel.grid.minor.x=element_blank(),
+    panel.grid.major.x=element_blank(),
+    panel.grid.minor.y=element_blank(),
+    panel.grid.major.y=element_blank())+
+  xlab("")+
+  ylab("Shannon Diversity")
+
+shannonstructurebox
+
+pdf("plots/shannonstructure.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(shannonstructurebox)
+dev.off()
+
+shannonbypatternmod<-aov(shannon~pattern, data = patterndata)
+anova(shannonbypatternmod)
+#NS
+
+
+
+lonshannonplot<-ggplot(data=patterndata, aes(lon, shannon)) +
+  geom_point(height = 0, width = .3)+
+  theme_bw()+
+  theme(#axis.title.x = element_blank(),
+    #axis.title.y = element_blank(),
+    axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+    panel.grid.minor.x=element_blank(),
+    panel.grid.major.x=element_blank(),
+    panel.grid.minor.y=element_blank(),
+    panel.grid.major.y=element_blank())+
+  xlab("lon")+
+  ylab("Shannon")
+
+lonshannonplot
+
+pdf("plots/shannonlon.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(lonshannonplot)
+dev.off()
+
+anova(aov(shannon~lon, data=patterndata))
+#NS
+
+latshannonplot<-ggplot(data=patterndata, aes(shannon, lat)) +
+  geom_point(height = 0, width = .3)+
+  theme_bw()+
+  theme(#axis.title.x = element_blank(),
+    #axis.title.y = element_blank(),
+    axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+    panel.grid.minor.x=element_blank(),
+    panel.grid.major.x=element_blank(),
+    panel.grid.minor.y=element_blank(),
+    panel.grid.major.y=element_blank())+
+  xlab("Shannon")+
+  ylab("lat")
+
+latshannonplot
+
+pdf("plots/shannonlat.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(latshannonplot)
+dev.off()
+
+anova(aov(shannon~lat, data=patterndata))
+#MS
+
+latshannonhigh<-ggplot(data=subset(patterndata, height == "H"), aes(shannon, lat)) +
+  geom_point(height = 0, width = .3)+
+  theme_bw()+
+  theme(#axis.title.x = element_blank(),
+    #axis.title.y = element_blank(),
+    axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+    panel.grid.minor.x=element_blank(),
+    panel.grid.major.x=element_blank(),
+    panel.grid.minor.y=element_blank(),
+    panel.grid.major.y=element_blank())+
+  xlab("Shannon")+
+  ylab("lat")
+
+latshannonhigh
+
+pdf("plots/shannonathigh.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(latshannonhigh)
+dev.off()
+
+latshannonlow<-ggplot(data=subset(patterndata, height == "L"), aes(shannon, lat)) +
+  geom_point(height = 0, width = .3)+
+  theme_bw()+
+  theme(#axis.title.x = element_blank(),
+    #axis.title.y = element_blank(),
+    axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+    panel.grid.minor.x=element_blank(),
+    panel.grid.major.x=element_blank(),
+    panel.grid.minor.y=element_blank(),
+    panel.grid.major.y=element_blank())+
+  xlab("Shannon")+
+  ylab("lat")
+
+latshannonlow
+
+pdf("plots/shannonatlow.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(latshannonlow)
+dev.off()
+
+anova(aov(shannon~lat, data= subset(patterndata, height == "H")))
+anova(aov(shannon~lat, data= subset(patterndata, height == "L")))
+#both NS
+
+lonshannonhigh<-ggplot(data=subset(patterndata, height == "H"), aes(shannon, lon)) +
+  geom_point(height = 0, width = .3)+
+  theme_bw()+
+  theme(#axis.title.x = element_blank(),
+    #axis.title.y = element_blank(),
+    axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+    panel.grid.minor.x=element_blank(),
+    panel.grid.major.x=element_blank(),
+    panel.grid.minor.y=element_blank(),
+    panel.grid.major.y=element_blank())+
+  xlab("Shannon")+
+  ylab("lon")
+
+lonshannonhigh
+
+pdf("plots/shannonlonhigh.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(lonshannonhigh)
+dev.off()
+
+lonshannonlow<-ggplot(data=subset(patterndata, height == "L"), aes(shannon, lon)) +
+  geom_point(height = 0, width = .3)+
+  theme_bw()+
+  theme(#axis.title.x = element_blank(),
+    #axis.title.y = element_blank(),
+    axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+    panel.grid.minor.x=element_blank(),
+    panel.grid.major.x=element_blank(),
+    panel.grid.minor.y=element_blank(),
+    panel.grid.major.y=element_blank())+
+  xlab("Shannon")+
+  ylab("lon")
+
+lonshannonlow
+
+pdf("plots/shannonlonlow.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(lonshannonlow)
+dev.off()
+
+anova(aov(shannon~lon, data= subset(patterndata, height == "H")))
+anova(aov(shannon~lon, data= subset(patterndata, height == "L")))
+#both NS
+
+
+shannonheightbox<-ggplot(data=patterndata, aes(height, shannon)) +
+  geom_boxplot(outlier.shape = NA, fill = "lightblue")+
+  geom_jitter(height = 0, width = .3)+
+  theme_bw()+
+  theme(#axis.title.x = element_blank(),
+    #axis.title.y = element_blank(),
+    axis.text.x  = element_text(angle=90, vjust=0.5, size=12),
+    panel.grid.minor.x=element_blank(),
+    panel.grid.major.x=element_blank(),
+    panel.grid.minor.y=element_blank(),
+    panel.grid.major.y=element_blank())+
+  xlab("Height")+
+  ylab("Shannon Diversity")
+
+shannonheightbox
+
+pdf("plots/shannonheightbox.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(shannonheightbox)
+dev.off()
+
+diversityheightmod<-aov(shannon~height, data = patterndata)
+anova(diversityheightmod)
+#NS
+
+diversitycovermod<-aov(shannon~cover, data = patterndata)
+anova(diversitycovermod)
+#NS
+
+diversitydbhmod<-aov(shannon~dbh, data = patterndata)
+anova(diversitydbhmod)
+# p = 0.004
+
+
+
+#controlling for patch, lon and lat ARE sig....but that autocorrelates w patch
+anova(aov(shannon~patch+lon+lat, data= patterndata))
+
+
+
+
+```
+
+
+Make initial Maps
+```{r}
+googlemap<-get_googlemap(center=c(lon= -71.68337, lat = -30.660), maptype = "satellite", zoom =14, force = TRUE)
+
+#label patches
+pnfjpatchmap<-ggmap(googlemap) + geom_point(data = newdata, mapping = aes(x = lon, y = lat), color = "purple")+
+  geom_text(data = patchcenter, aes(label = paste("  ", as.character(patch), sep="")), angle = 60, hjust = 0, color = "yellow")
+#remove angle and hjust to center the patch labels
+
+#label all points
+pnfjpointmap<-ggmap(googlemap) + geom_point(data = newdata, mapping = aes(x = lon, y = lat), color = "purple")+
+  geom_text(data = newdata, aes(label = paste("  ", as.character(site), sep="")), angle = 60, hjust = 0, color = "yellow")
+
+#label metacommunity pattern
+pnfjmetacommap<-ggmap(googlemap) + geom_point(data = newdata, mapping = aes(x = lon, y = lat), color = "purple", size =.7)+
+  geom_text_repel(data = patchcenter, size = 2, aes(label = paste("  ", as.character(pattern), sep=""), color= pattern),  hjust = 0)
+pnfjmetacommap
+
+pdf("plots/patchmap.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(pnfjpatchmap)
+dev.off()
+
+pdf("plots/pointmap.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(pnfjpointmap)
+dev.off()
+
+pdf("plots/metacommap.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(pnfjmetacommap)
+dev.off()
+
+```
+
+Diversity Maps
+```{r}
+
+shannonmaphigh<-ggmap(googlemap) + geom_point(data = subset(patterndata, height == "H"), mapping = aes(x = lon, y = lat, color = shannon), size = 0.05) + scale_colour_gradient(low= "yellow", high = "red") 
+shannonmaphigh
+
+shannonmaplow<-ggmap(googlemap) + geom_point(data = subset(patterndata, height == "L"), mapping = aes(x = lon, y = lat, color = shannon), size = 0.05) + scale_colour_gradient(low= "yellow", high = "red") 
+shannonmaplow
+
+topomap<-get_googlemap(center=c(lon= -71.68337, lat = -30.660), maptype = "terrain", zoom =14, force = TRUE)
+
+shannontopohigh<-ggmap(topomap) + geom_point(data = subset(patterndata, height == "H"), mapping = aes(x = lon, y = lat, color = shannon), size = 0.05) + scale_colour_gradient(low= "yellow", high = "red") 
+shannontopohigh
+
+shannontopolow<-ggmap(topomap) + geom_point(data = subset(patterndata, height == "L"), mapping = aes(x = lon, y = lat, color = shannon), size = 0.05) + scale_colour_gradient(low= "yellow", high = "red") 
+shannontopolow
+
+
+pdf("plots/shannonmaphigh.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(shannonmaphigh)
+dev.off()
+
+pdf("plots/shannonmaplow.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(shannonmaplow)
+dev.off()
+
+pdf("plots/shannontopohigh.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(shannontopohigh)
+dev.off()
+
+pdf("plots/shannontopolow.pdf", paper="a4r")
+par(omi=c(1,1,1,1))
+plot(shannontopolow)
+dev.off()
+```
